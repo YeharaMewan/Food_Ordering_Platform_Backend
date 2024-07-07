@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import User from "../models/user";
-import { getJSDocReturnTag } from "typescript";
 
 const getCurrentUser = async (req: Request, res: Response) => {
   try {
@@ -12,7 +11,7 @@ const getCurrentUser = async (req: Request, res: Response) => {
     res.json(currentUser);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Something went wrong" });
+    return res.status(500).json({ message: "Something went wrong" });
   }
 };
 
@@ -41,13 +40,13 @@ const updateCurrentUser = async (req: Request, res: Response) => {
     const user = await User.findById(req.userId);
 
     if (!user) {
-      return res.status(404).json({ message: "User not fonnd" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     user.name = name;
     user.addressLine1 = addressLine1;
-    user.country = country;
     user.city = city;
+    user.country = country;
 
     await user.save();
 

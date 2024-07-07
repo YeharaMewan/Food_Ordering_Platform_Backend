@@ -6,15 +6,15 @@ import User from "../models/user";
 declare global {
   namespace Express {
     interface Request {
-      auth0Id: string;
       userId: string;
+      auth0Id: string;
     }
   }
 }
 
 export const jwtCheck = auth({
   audience: process.env.AUTH0_AUDIENCE,
-  issuerBaseURL: process.env.AUTH0_ISSURE_BASE_URL,
+  issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
   tokenSigningAlg: "RS256"
 });
 
@@ -29,6 +29,7 @@ export const jwtParse = async (
     return res.sendStatus(401);
   }
 
+  // Bearer lshdflshdjkhvjkshdjkvh34h5k3h54jkh
   const token = authorization.split(" ")[1];
 
   try {
