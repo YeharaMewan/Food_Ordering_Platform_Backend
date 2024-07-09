@@ -16,7 +16,7 @@ const getMyOrders = async (req: Request, res: Response) => {
     res.json(orders);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "something went wrong" });
+    res.status(500).json({ message: "Something went wrong" });
   }
 };
 

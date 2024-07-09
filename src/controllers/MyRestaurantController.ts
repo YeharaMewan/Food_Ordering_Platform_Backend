@@ -8,7 +8,7 @@ const getMyRestaurant = async (req: Request, res: Response) => {
   try {
     const restaurant = await Restaurant.findOne({ user: req.userId });
     if (!restaurant) {
-      return res.status(404).json({ message: "Restaurant not found" });
+      return res.status(404).json({ message: "restaurant not found" });
     }
     res.json(restaurant);
   } catch (error) {
@@ -49,7 +49,7 @@ const updateMyRestaurant = async (req: Request, res: Response) => {
     });
 
     if (!restaurant) {
-      return res.status(404).json({ message: "Restaurant not found" });
+      return res.status(404).json({ message: "restaurant not found" });
     }
 
     restaurant.restaurantName = req.body.restaurantName;
