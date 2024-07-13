@@ -1,18 +1,12 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import "dotenv/config";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
 import myUserRoute from "./routes/MyUserRoute";
 import { v2 as cloudinary } from "cloudinary";
 import myRestaurantRoute from "./routes/MyRestaurantRoute";
 import restaurantRoute from "./routes/RestaurantRoute";
 import orderRoute from "./routes/OrderRoute";
-
-dotenv.config();
-
-console.log("AUTH0_AUDIENCE:", process.env.AUTH0_AUDIENCE);
-console.log("AUTH0_ISSUER_BASE_URL:", process.env.AUTH0_ISSUER_BASE_URL);
 
 mongoose
   .connect(process.env.MONGODB_CONNECTION_STRING as string)

@@ -12,11 +12,6 @@ declare global {
   }
 }
 
-console.log("Auth config:", {
-  audience: process.env.AUTH0_AUDIENCE,
-  issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL
-});
-
 export const jwtCheck = auth({
   audience: process.env.AUTH0_AUDIENCE,
   issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
