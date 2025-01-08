@@ -18,13 +18,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const app = express();
+const app = express(); //express sever instance
 
 app.use(cors());
 
 app.use("/api/order/checkout/webhook", express.raw({ type: "*/*" }));
 
-app.use(express.json());
+app.use(express.json()); //middelware to parse json data
 
 app.get("/health", async (req: Request, res: Response) => {
   res.send({ message: "health OK!" });
@@ -37,4 +37,4 @@ app.use("/api/order", orderRoute);
 
 app.listen(7000, () => {
   console.log("server started on localhost:7000");
-});
+}); // call  back function execute to start server
