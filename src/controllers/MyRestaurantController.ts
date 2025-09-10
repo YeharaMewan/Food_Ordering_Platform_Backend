@@ -4,11 +4,39 @@ import cloudinary from "cloudinary";
 import mongoose from "mongoose";
 import Order from "../models/order";
 
+const calculateMissingOrderTotal = (order: any): number => {
+  let totalAmount = 0;
+
+  // Calculate total from cart items
+  if (order.cartItems && Array.isArray(order.cartItems)) {
+    order.cartItems.forEach((cartItem: any) => {
+      // Find the menu item in the restaurant
+      const menuItem = order.restaurant?.menuItems?.find(
+        (item: any) => item._id.toString() === cartItem.menuItemId.toString()
+      );
+
+      if (menuItem && cartItem.quantity) {
+        const quantity = typeof cartItem.quantity === 'string' 
+          ? parseInt(cartItem.quantity) 
+          : cartItem.quantity;
+        totalAmount += menuItem.price * quantity;
+      }
+    });
+  }
+
+  // Add delivery price if available
+  if (order.restaurant?.deliveryPrice) {
+    totalAmount += order.restaurant.deliveryPrice;
+  }
+
+  return totalAmount;
+};
+
 const getMyRestaurant = async (req: Request, res: Response) => {
   try {
     const restaurant = await Restaurant.findOne({ user: req.userId });
     if (!restaurant) {
-      return res.status(404).json({ message: "Restaurant not found" });
+      return res.status(404).json({ message: "restaurant not found" });
     }
     res.json(restaurant);
   } catch (error) {
@@ -45,11 +73,11 @@ const createMyRestaurant = async (req: Request, res: Response) => {
 const updateMyRestaurant = async (req: Request, res: Response) => {
   try {
     const restaurant = await Restaurant.findOne({
-      user: req.userId
+      user: req.userId,
     });
 
     if (!restaurant) {
-      return res.status(404).json({ message: "Restaurant not found" });
+      return res.status(404).json({ message: "restaurant not found" });
     }
 
     restaurant.restaurantName = req.body.restaurantName;
@@ -78,17 +106,33 @@ const getMyRestaurantOrders = async (req: Request, res: Response) => {
   try {
     const restaurant = await Restaurant.findOne({ user: req.userId });
     if (!restaurant) {
-      return res.status(404).json({ message: "Restaurant is not found" });
+      return res.status(404).json({ message: "restaurant not found" });
     }
 
     const orders = await Order.find({ restaurant: restaurant._id })
       .populate("restaurant")
       .populate("user");
 
-    res.json(orders);
+    // Calculate missing totalAmount for orders that don't have it
+    const ordersWithTotals = orders.map(order => {
+      const orderObj = order.toObject();
+      
+      // If totalAmount is missing or null, calculate it
+      if (orderObj.totalAmount == null) {
+        orderObj.totalAmount = calculateMissingOrderTotal(orderObj);
+        
+        // Optionally save the calculated total back to the database
+        order.totalAmount = orderObj.totalAmount;
+        order.save().catch(err => console.log('Error saving calculated total:', err));
+      }
+      
+      return orderObj;
+    });
+
+    res.json(ordersWithTotals);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Something went wrong" });
+    res.status(500).json({ message: "something went wrong" });
   }
 };
 
@@ -99,7 +143,7 @@ const updateOrderStatus = async (req: Request, res: Response) => {
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(404).json({ message: "order not found" });
     }
 
     const restaurant = await Restaurant.findById(order.restaurant);
@@ -114,7 +158,7 @@ const updateOrderStatus = async (req: Request, res: Response) => {
     res.status(200).json(order);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Unable to update order status" });
+    res.status(500).json({ message: "unable to update order status" });
   }
 };
 
@@ -132,5 +176,5 @@ export default {
   getMyRestaurantOrders,
   getMyRestaurant,
   createMyRestaurant,
-  updateMyRestaurant
+  updateMyRestaurant,
 };

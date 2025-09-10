@@ -15,16 +15,16 @@ mongoose
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const app = express(); //express sever instance
+const app = express();
 
 app.use(cors());
 
 app.use("/api/order/checkout/webhook", express.raw({ type: "*/*" }));
 
-app.use(express.json()); //middelware to parse json data
+app.use(express.json());
 
 app.get("/health", async (req: Request, res: Response) => {
   res.send({ message: "health OK!" });
@@ -37,4 +37,4 @@ app.use("/api/order", orderRoute);
 
 app.listen(7000, () => {
   console.log("server started on localhost:7000");
-}); // call  back function execute to start server
+});

@@ -7,16 +7,60 @@ const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string);
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
 const STRIPE_ENDPOINT_SECRET = process.env.STRIPE_WEBHOOK_SECRET as string;
 
+const calculateMissingOrderTotal = (order: any): number => {
+  let totalAmount = 0;
+
+  // Calculate total from cart items
+  if (order.cartItems && Array.isArray(order.cartItems)) {
+    order.cartItems.forEach((cartItem: any) => {
+      // Find the menu item in the restaurant
+      const menuItem = order.restaurant?.menuItems?.find(
+        (item: any) => item._id.toString() === cartItem.menuItemId.toString()
+      );
+
+      if (menuItem && cartItem.quantity) {
+        const quantity = typeof cartItem.quantity === 'string' 
+          ? parseInt(cartItem.quantity) 
+          : cartItem.quantity;
+        totalAmount += menuItem.price * quantity;
+      }
+    });
+  }
+
+  // Add delivery price if available
+  if (order.restaurant?.deliveryPrice) {
+    totalAmount += order.restaurant.deliveryPrice;
+  }
+
+  return totalAmount;
+};
+
 const getMyOrders = async (req: Request, res: Response) => {
   try {
     const orders = await Order.find({ user: req.userId })
       .populate("restaurant")
       .populate("user");
 
-    res.json(orders);
+    // Calculate missing totalAmount for orders that don't have it
+    const ordersWithTotals = orders.map(order => {
+      const orderObj = order.toObject();
+      
+      // If totalAmount is missing or null, calculate it
+      if (orderObj.totalAmount == null) {
+        orderObj.totalAmount = calculateMissingOrderTotal(orderObj);
+        
+        // Optionally save the calculated total back to the database
+        order.totalAmount = orderObj.totalAmount;
+        order.save().catch(err => console.log('Error saving calculated total:', err));
+      }
+      
+      return orderObj;
+    });
+
+    res.json(ordersWithTotals);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Something went wrong" });
+    res.status(500).json({ message: "something went wrong" });
   }
 };
 
@@ -57,13 +101,41 @@ const stripeWebhookHandler = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    order.totalAmount = event.data.object.amount_total;
+    // Only update totalAmount if Stripe provides a valid amount
+    if (event.data.object.amount_total != null) {
+      order.totalAmount = event.data.object.amount_total;
+    }
     order.status = "paid";
 
     await order.save();
   }
 
   res.status(200).send();
+};
+
+const calculateOrderTotal = (
+  checkoutSessionRequest: CheckoutSessionRequest,
+  menuItems: MenuItemType[],
+  deliveryPrice: number
+): number => {
+  let totalAmount = 0;
+
+  checkoutSessionRequest.cartItems.forEach((cartItem) => {
+    const menuItem = menuItems.find(
+      (item) => item._id.toString() === cartItem.menuItemId.toString()
+    );
+
+    if (!menuItem) {
+      throw new Error(`Menu item not found: ${cartItem.menuItemId}`);
+    }
+
+    totalAmount += menuItem.price * parseInt(cartItem.quantity);
+  });
+
+  // Add delivery price
+  totalAmount += deliveryPrice;
+
+  return totalAmount;
 };
 
 const createCheckoutSession = async (req: Request, res: Response) => {
@@ -78,13 +150,21 @@ const createCheckoutSession = async (req: Request, res: Response) => {
       throw new Error("Restaurant not found");
     }
 
+    // Calculate total amount before creating the order
+    const totalAmount = calculateOrderTotal(
+      checkoutSessionRequest,
+      restaurant.menuItems,
+      restaurant.deliveryPrice
+    );
+
     const newOrder = new Order({
       restaurant: restaurant,
       user: req.userId,
       status: "placed",
       deliveryDetails: checkoutSessionRequest.deliveryDetails,
       cartItems: checkoutSessionRequest.cartItems,
-      createdAt: new Date()
+      totalAmount: totalAmount,
+      createdAt: new Date(),
     });
 
     const lineItems = createLineItems(
@@ -126,13 +206,13 @@ const createLineItems = (
 
     const line_item: Stripe.Checkout.SessionCreateParams.LineItem = {
       price_data: {
-        currency: "gbp",
+        currency: "usd",
         unit_amount: menuItem.price,
         product_data: {
-          name: menuItem.name
-        }
+          name: menuItem.name,
+        },
       },
-      quantity: parseInt(cartItem.quantity)
+      quantity: parseInt(cartItem.quantity),
     };
 
     return line_item;
@@ -156,18 +236,18 @@ const createSession = async (
           type: "fixed_amount",
           fixed_amount: {
             amount: deliveryPrice,
-            currency: "gbp"
-          }
-        }
-      }
+            currency: "usd",
+          },
+        },
+      },
     ],
     mode: "payment",
     metadata: {
       orderId,
-      restaurantId
+      restaurantId,
     },
     success_url: `${FRONTEND_URL}/order-status?success=true`,
-    cancel_url: `${FRONTEND_URL}/detail/${restaurantId}?cancelled=true`
+    cancel_url: `${FRONTEND_URL}/detail/${restaurantId}?cancelled=true`,
   });
 
   return sessionData;
@@ -176,5 +256,5 @@ const createSession = async (
 export default {
   getMyOrders,
   createCheckoutSession,
-  stripeWebhookHandler
+  stripeWebhookHandler,
 };
