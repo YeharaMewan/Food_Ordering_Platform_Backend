@@ -15,4 +15,6 @@ router.post(
 
 router.post("/checkout/webhook", OrderController.stripeWebhookHandler);
 
+router.delete("/:orderId", jwtCheck, jwtParse, OrderController.deleteOrder);
+
 export default router;

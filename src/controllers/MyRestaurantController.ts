@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import Restaurant from "../models/restaurant";
 import cloudinary from "cloudinary";
 import mongoose from "mongoose";
-import Order from "../models/order";
+import Order, { OrderType } from "../models/order";
 
 const calculateMissingOrderTotal = (order: any): number => {
   let totalAmount = 0;
@@ -114,7 +114,7 @@ const getMyRestaurantOrders = async (req: Request, res: Response) => {
       .populate("user");
 
     // Calculate missing totalAmount for orders that don't have it
-    const ordersWithTotals = orders.map(order => {
+    const ordersWithTotals = orders.map((order: any) => {
       const orderObj = order.toObject();
       
       // If totalAmount is missing or null, calculate it
@@ -123,7 +123,7 @@ const getMyRestaurantOrders = async (req: Request, res: Response) => {
         
         // Optionally save the calculated total back to the database
         order.totalAmount = orderObj.totalAmount;
-        order.save().catch(err => console.log('Error saving calculated total:', err));
+        order.save().catch((err: any) => console.log('Error saving calculated total:', err));
       }
       
       return orderObj;

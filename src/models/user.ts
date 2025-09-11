@@ -1,6 +1,17 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
+export interface UserType {
+  _id: mongoose.Types.ObjectId;
+  auth0Id: string;
+  email: string;
+  name?: string;
+  addressLine1?: string;
+  city?: string;
+  country?: string;
+  role: "user" | "admin";
+}
+
+const userSchema = new mongoose.Schema<UserType>({
   auth0Id: {
     type: String,
     required: true,
@@ -21,7 +32,13 @@ const userSchema = new mongoose.Schema({
   country: {
     type: String,
   },
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
+    required: true,
+  },
 });
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model<UserType>("User", userSchema);
 export default User;
