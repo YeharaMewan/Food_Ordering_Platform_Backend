@@ -60,5 +60,5 @@ const updateCurrentUser = async (req: Request, res: Response) => {
 export default {
   getCurrentUser,
   createCurrentUser,
-  updateCurrentUser
+  updateCurrentUser,
 };

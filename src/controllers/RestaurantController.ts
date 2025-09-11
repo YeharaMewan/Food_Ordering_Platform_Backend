@@ -7,13 +7,13 @@ const getRestaurant = async (req: Request, res: Response) => {
 
     const restaurant = await Restaurant.findById(restaurantId);
     if (!restaurant) {
-      return res.status(404).json({ message: "Restaurant not found" });
+      return res.status(404).json({ message: "restaurant not found" });
     }
 
     res.json(restaurant);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Something went wrong" });
+    res.status(500).json({ message: "something went wrong" });
   }
 };
 
@@ -36,8 +36,8 @@ const searchRestaurant = async (req: Request, res: Response) => {
         pagination: {
           total: 0,
           page: 1,
-          pages: 1
-        }
+          pages: 1,
+        },
       });
     }
 
@@ -53,7 +53,7 @@ const searchRestaurant = async (req: Request, res: Response) => {
       const searchRegex = new RegExp(searchQuery, "i");
       query["$or"] = [
         { restaurantName: searchRegex },
-        { cuisines: { $in: [searchRegex] } }
+        { cuisines: { $in: [searchRegex] } },
       ];
     }
 
@@ -74,8 +74,8 @@ const searchRestaurant = async (req: Request, res: Response) => {
       pagination: {
         total,
         page,
-        pages: Math.ceil(total / pageSize)
-      }
+        pages: Math.ceil(total / pageSize),
+      },
     };
 
     res.json(response);
@@ -87,5 +87,5 @@ const searchRestaurant = async (req: Request, res: Response) => {
 
 export default {
   getRestaurant,
-  searchRestaurant
+  searchRestaurant,
 };
