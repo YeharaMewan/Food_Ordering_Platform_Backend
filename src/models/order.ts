@@ -1,6 +1,30 @@
 import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema({
+export interface CartItemType {
+  menuItemId: string;
+  quantity: string;
+  name: string;
+}
+
+export interface DeliveryDetailsType {
+  email: string;
+  name: string;
+  addressLine1: string;
+  city: string;
+}
+
+export interface OrderType {
+  _id: mongoose.Types.ObjectId;
+  restaurant: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
+  deliveryDetails: DeliveryDetailsType;
+  cartItems: CartItemType[];
+  totalAmount: number;
+  status: "placed" | "paid" | "inProgress" | "outForDelivery" | "delivered";
+  createdAt: Date;
+}
+
+const orderSchema = new mongoose.Schema<OrderType>({
   restaurant: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   deliveryDetails: {
@@ -24,5 +48,5 @@ const orderSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const Order = mongoose.model("Order", orderSchema);
+const Order = mongoose.model<OrderType>("Order", orderSchema);
 export default Order;

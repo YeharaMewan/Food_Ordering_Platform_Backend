@@ -1,6 +1,27 @@
-import mongoose, { InferSchemaType } from "mongoose";
+import mongoose from "mongoose";
 
-const menuItemSchema = new mongoose.Schema({
+// Define interfaces explicitly instead of relying on InferSchemaType
+export interface MenuItemType {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  price: number;
+}
+
+export interface RestaurantType {
+  _id: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
+  restaurantName: string;
+  city: string;
+  country: string;
+  deliveryPrice: number;
+  estimatedDeliveryTime: number;
+  cuisines: string[];
+  menuItems: MenuItemType[];
+  imageUrl: string;
+  lastUpdated: Date;
+}
+
+const menuItemSchema = new mongoose.Schema<MenuItemType>({
   _id: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -10,9 +31,7 @@ const menuItemSchema = new mongoose.Schema({
   price: { type: Number, required: true },
 });
 
-export type MenuItemType = InferSchemaType<typeof menuItemSchema>;
-
-const restaurantSchema = new mongoose.Schema({
+const restaurantSchema = new mongoose.Schema<RestaurantType>({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   restaurantName: { type: String, required: true },
   city: { type: String, required: true },
@@ -25,5 +44,5 @@ const restaurantSchema = new mongoose.Schema({
   lastUpdated: { type: Date, required: true },
 });
 
-const Restaurant = mongoose.model("Restaurant", restaurantSchema);
+const Restaurant = mongoose.model<RestaurantType>("Restaurant", restaurantSchema);
 export default Restaurant;

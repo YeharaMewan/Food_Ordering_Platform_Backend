@@ -253,8 +253,37 @@ const createSession = async (
   return sessionData;
 };
 
+const deleteOrder = async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.userId;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.user.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized to delete this order" });
+    }
+
+    if (order.status === "inProgress") {
+      return res.status(400).json({ message: "Cannot delete order that is in progress" });
+    }
+
+    await Order.findByIdAndDelete(orderId);
+
+    res.json({ message: "Order deleted successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Failed to delete order" });
+  }
+};
+
 export default {
   getMyOrders,
   createCheckoutSession,
   stripeWebhookHandler,
+  deleteOrder,
 };
